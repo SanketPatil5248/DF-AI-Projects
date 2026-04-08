@@ -126,7 +126,10 @@ if col2.button("⚡ Fix Code"):
                 prompt = f"""
 You are an expert {language} developer.
 
-Fix the following code and return ONLY the corrected version.
+Fix the following code. 
+Return ONLY the raw code. 
+Do NOT include markdown code blocks (like ```python).
+Do NOT include any explanations.
 
 Code:
 {code_input}
