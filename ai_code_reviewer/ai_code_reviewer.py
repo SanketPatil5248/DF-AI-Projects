@@ -112,41 +112,46 @@ Code:
 
 
 # ---------------- FIX CODE ----------------
-# Button for automatically fixing code
 if col2.button("⚡ Fix Code"):
-
-    # Check if user entered anything
     if code_input.strip() == "":
         st.warning("⚠️ Please enter code!")
     else:
-        # Show loading spinner while AI is working
-        with st.spinner("Fixing code..."):
+        with st.spinner("Fixing errors..."):
             try:
-                # Prompt telling AI to only return corrected code
+                # This prompt forces the AI to fix "unrunnable" parts (like reserved keywords) 
+                # but keep the user's manual loop style.
                 prompt = f"""
-You are an expert {language} developer.
+You are a code repair tool. 
+Task: Fix the following {language} code so it runs without errors.
 
-Fix the following code. 
-Return ONLY the raw code. 
-Do NOT include markdown code blocks (like ```python).
-Do NOT include any explanations.
+Rules:
+1. Fix runtime errors (e.g., using reserved keywords like 'list' as variables).
+2. Fix indentation or syntax errors.
+3. Keep the user's original logic (if they used a loop, do not use sum()).
+4. If the function returns a value, ensure the test call at the bottom prints it so the user sees a result.
+5. Return ONLY the raw code. No markdown, no backticks, no explanations.
 
 Code:
 {code_input}
 """
 
-                # Send request to Gemini AI
                 response = client.models.generate_content(
                     model="gemini-2.0-flash",
                     contents=prompt
                 )
 
-                # Display fixed code with syntax highlighting
+                # Robust cleaning to remove ```python or ``` block markers
+                raw_output = response.text
+                clean_code = raw_output.replace("```python", "").replace("```", "").strip()
+                
+                # If the AI adds a language label on the first line by accident, remove it
+                if clean_code.lower().startswith("python\n"):
+                    clean_code = clean_code[7:].strip()
+
                 st.subheader("✅ Fixed Code")
-                st.code(response.text, language=language.lower())
+                st.code(clean_code, language=language.lower())
 
             except Exception as e:
-                # Handle errors
                 st.error(f"❌ Error: {e}")
 
 
